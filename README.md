@@ -22,11 +22,14 @@ Waddle se encuentra actualmente en desarrollo.
 
 ## 🛠️ Stack tecnológico
 
+Consulta [la guía de arquitectura](docs/architecture.md) para saber dónde colocar
+rutas, componentes, funcionalidades e integraciones. La portada es provisional.
+
 - **Next.js** — Framework principal.
 - **React** — Construcción de componentes e interfaces.
 - **JavaScript** — Lógica de la aplicación.
 - **Tailwind CSS** — Estilos.
-- **Supabase** — Base de datos y backend.
+- **Supabase** — Base de datos y autenticación previstas; integración pendiente.
 - **Git & GitHub** — Control de versiones y colaboración.
 
 ## 🚀 Instalación
@@ -43,6 +46,10 @@ Instala las dependencias:
 ```bash
 npm install
 ```
+
+Al integrar Supabase, copia `.env.example` a `.env.local` y completa la URL y la
+clave publicable. La portada actual funciona sin estas variables. No subas
+`.env.local` ni el secreto de Google al repositorio.
 
 Inicia el servidor de desarrollo:
 
