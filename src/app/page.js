@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-6 px-6 py-24">
@@ -9,7 +11,7 @@ export default function Home() {
         Descubre los eventos, talleres y charlas de las agrupaciones de
         Informática de tu universidad.
       </p>
-      <p className="text-sm opacity-70">Próximamente.</p>
+      <Link href="/agrupaciones" className="w-fit rounded-xl bg-emerald-800 px-6 py-3 font-medium text-white">Explorar agrupaciones →</Link>
     </main>
   );
 }
