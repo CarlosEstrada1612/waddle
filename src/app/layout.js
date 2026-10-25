@@ -1,28 +1,23 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
+import Sidebar from "@/components/layout/Sidebar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata = {
   title: { default: "Waddle | Eventos y comunidad", template: "%s | Waddle" },
-  description: "Eventos, talleres y charlas de la comunidad de Informática.",
+  description: "Plataforma de eventos y agrupaciones de Informática PUCP.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="es" className={`${geist.variable} h-full`}>
+      <body className="h-full flex bg-[#030d1c] text-[#f0f6ff]">
+        <Sidebar />
+        <main className="flex-1 ml-[220px] min-h-screen overflow-x-hidden flex flex-col">
+          {children}
+        </main>
+      </body>
     </html>
   );
 }
