@@ -5,81 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import StatusBadge from '@/components/layout/StatusBadge';
 import EventCard from '@/components/events/EventCard';
-
-const teamMembers = [
-  {
-    id: 1,
-    name: 'Camila Torres',
-    role: 'Lead Organizer & President',
-    roleBadge: 'Chapter Lead',
-    roleColor: 'bg-blue-500/20 text-cyan-300 border-blue-500/30',
-    department: 'Ingeniería Informática PUCP',
-    bio: 'Liderando iniciativas de desarrollo tecnológico, talleres formativos y vinculación con Google Developers.',
-    avatar: 'https://i.pravatar.cc/150?img=47',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-  {
-    id: 2,
-    name: 'Mateo Fernández',
-    role: 'Tech Lead & Web Architect',
-    roleBadge: 'Tech Lead',
-    roleColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    department: 'Ciencias de la Computación',
-    bio: 'Especialista en frontend moderno, React, Next.js y arquitecturas de microservicios para la comunidad.',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-  {
-    id: 3,
-    name: 'Valeria Chan',
-    role: 'ML & AI Track Lead',
-    roleBadge: 'AI & Data Lead',
-    roleColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    department: 'Ingeniería Informática PUCP',
-    bio: 'Investigadora en visión computacional y modelos generativos aplicados a resolver problemáticas universitarias.',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-  {
-    id: 4,
-    name: 'Nicolás Rojas',
-    role: 'Cloud & DevOps Lead',
-    roleBadge: 'Cloud Lead',
-    roleColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    department: 'Ingeniería de Telecomunicaciones',
-    bio: 'Certificado en GCP y AWS, coordinando laboratorios hands-on de contenedores, Kubernetes y CI/CD.',
-    avatar: 'https://i.pravatar.cc/150?img=33',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-  {
-    id: 5,
-    name: 'Lucía Mendoza',
-    role: 'Community & Experience Lead',
-    roleBadge: 'Community Lead',
-    roleColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    department: 'Diseño Industrial / UX PUCP',
-    bio: 'Fomentando una comunidad inclusiva y diseñando dinámicas colaborativas para talleres y hackathons.',
-    avatar: 'https://i.pravatar.cc/150?img=28',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-  {
-    id: 6,
-    name: 'Alejandro Silva',
-    role: 'Logistics & Sponsorships',
-    roleBadge: 'Logística & Partners',
-    roleColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    department: 'Ingeniería Informática PUCP',
-    bio: 'Gestión con empresas aliadas, convenios académicos y organización logística de eventos presenciales en el campus.',
-    avatar: 'https://i.pravatar.cc/150?img=68',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-  },
-];
+import { safeHttpsUrl } from '@/components/organizations/organization-image';
 
 export default function OrgProfileTabs({ org, upcomingEvents = [], pastEvents = [] }) {
   const [activeTab, setActiveTab] = useState('sobre-nosotros');
@@ -89,10 +15,14 @@ export default function OrgProfileTabs({ org, upcomingEvents = [], pastEvents = 
     {
       id: 'proximos-eventos',
       label: 'Próximos eventos',
-      count: upcomingEvents.length > 0 ? upcomingEvents.length : 4,
+      count: upcomingEvents.length,
     },
     { id: 'historial', label: 'Historial de actividades' },
-    { id: 'equipo', label: 'Equipo & Integrantes' },
+    {
+      id: 'equipo',
+      label: 'Equipo & Integrantes',
+      count: org.members && org.members.length > 0 ? org.members.length : undefined,
+    },
   ];
 
   return (
@@ -444,72 +374,63 @@ export default function OrgProfileTabs({ org, upcomingEvents = [], pastEvents = 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teamMembers.map((member) => (
-              <div
-                key={member.id}
-                className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 hover:border-cyan-400/30 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex items-center gap-3.5 mb-3">
-                    <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-cyan-400/40 shrink-0">
-                      <Image
-                        src={member.avatar}
-                        alt={member.name}
-                        fill
-                        sizes="56px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+          {org.members && org.members.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {org.members.map((member, index) => (
+                <div
+                  key={`${member.nombre}-${index}`}
+                  className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 hover:border-cyan-400/30 transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex items-center gap-3.5 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1d6ef5] to-[#38bdf8] flex items-center justify-center font-bold text-white text-base shadow-md shrink-0">
+                        {member.nombre?.trim().slice(0, 2).toUpperCase() || 'IN'}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-base font-bold text-white truncate">
+                          {member.nombre || 'Integrante'}
+                        </h4>
+                        <span
+                          className={`inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            member.rol === 'jefe'
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                              : 'bg-blue-500/20 text-cyan-300 border-blue-500/30'
+                          }`}
+                        >
+                          {member.rol === 'jefe' ? 'Jefe de agrupación' : 'Promotor'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="text-base font-bold text-white truncate">
-                        {member.name}
-                      </h4>
-                      <span className={`inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${member.roleColor}`}>
-                        {member.roleBadge}
+
+                    <p className="text-xs text-[#94a3b8] leading-relaxed">
+                      Integrante publicado por la agrupación.
+                    </p>
+                  </div>
+
+                  {safeHttpsUrl(member.enlace_publico) && (
+                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                      <span className="text-[10px] text-[#94a3b8] uppercase font-semibold">
+                        Perfil externo
                       </span>
+                      <a
+                        href={safeHttpsUrl(member.enlace_publico)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-cyan-300 hover:text-cyan-200 transition-colors"
+                      >
+                        <span>Ver perfil</span>
+                        <span>↗</span>
+                      </a>
                     </div>
-                  </div>
-
-                  <p className="text-xs font-medium text-cyan-400 mb-1">
-                    {member.role}
-                  </p>
-                  <p className="text-[11px] text-[#94a3b8] mb-3">
-                    {member.department}
-                  </p>
-                  <p className="text-xs text-[#94a3b8] leading-relaxed line-clamp-3">
-                    {member.bio}
-                  </p>
+                  )}
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-[10px] text-[#94a3b8] uppercase font-semibold">
-                    Contacto PUCP
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={member.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-xs text-white hover:text-cyan-400 transition-colors"
-                      title="GitHub"
-                    >
-                      GH
-                    </a>
-                    <a
-                      href={member.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs text-cyan-300 transition-colors"
-                      title="LinkedIn"
-                    >
-                      in
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl border border-white/10 p-6 text-sm text-slate-400">
+              El equipo de esta agrupación aparecerá aquí cuando esté disponible.
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
+import TopBar from "@/components/layout/TopBar";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -14,6 +15,8 @@ export default function RootLayout({ children }) {
     <html lang="es" className={`${geist.variable} h-full`}>
       <body className="h-full flex bg-[#030d1c] text-[#f0f6ff]">
         <Sidebar />
+        {/* Top-right bar: notifications + avatar — fixed, visible on all pages */}
+        <TopBar />
         <main className="flex-1 ml-[220px] min-h-screen overflow-x-hidden flex flex-col">
           {children}
         </main>

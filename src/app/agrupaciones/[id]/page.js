@@ -2,49 +2,60 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { mockOrganizations, mockEvents } from '@/lib/mockData';
+import { getOrganization } from '@/server/organizations';
+import OrganizationImage from '@/components/organizations/organization-image';
 import EventCard from '@/components/events/EventCard';
 import Footer from '@/components/layout/Footer';
 import OrgProfileTabs from './OrgProfileTabs';
 
-export async function generateStaticParams() {
-  return mockOrganizations.map((org) => ({ id: org.id }));
-}
+// Dynamic: soporta IDs numéricos de Supabase y slugs mock
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const org = mockOrganizations.find((o) => o.id === id);
-  if (!org) return { title: 'Agrupación no encontrada' };
-  return {
-    title: `${org.name} - ${org.fullName} | Waddle`,
-    description: org.description,
-  };
+  const org = await getOrganization(id);
+  if (org) return { title: org.nombre || org.name, description: org.descripcion || org.description };
+  return { title: 'Perfil de agrupación | Waddle' };
 }
 
 export default async function AgrupacionDetailPage({ params }) {
   const { id } = await params;
-  const org = mockOrganizations.find((o) => o.id === id);
 
-  if (!org) {
-    notFound();
-  }
+  const org = await getOrganization(id);
+  const mockOrg = mockOrganizations.find((o) => o.id === id);
 
-  // Filter events belonging to this org
+  if (!org) notFound();
+
+  // Filter events from mock (o complementarios)
   const orgEvents = mockEvents.filter(
     (e) =>
-      (e.organizerIds && e.organizerIds.includes(org.id)) ||
-      (e.organizer && e.organizer.toLowerCase().includes(org.initials.toLowerCase()))
+      (e.organizerIds && e.organizerIds.includes(id)) ||
+      (mockOrg && e.organizer && e.organizer.toLowerCase().includes((mockOrg.initials || '').toLowerCase()))
   );
 
   const upcomingEvents = orgEvents.filter(
     (e) => e.status !== 'FINALIZADO' && e.status !== 'CANCELADO'
   );
-
   const pastEvents = orgEvents.filter(
     (e) => e.status === 'FINALIZADO' || e.status === 'CANCELADO'
   );
-
-  // Fallbacks if list is empty for another org
   const displayUpcoming = upcomingEvents.length > 0 ? upcomingEvents : orgEvents.slice(0, 3);
+
+  // Normalizar campos entre Supabase y mock
+  const displayName = org.nombre || org.name || org.fullName || 'Agrupación';
+  const displayFullName = org.fullName || displayName;
+  const displayDesc = org.descripcion || org.description || '';
+  const displayCategory = org.category || 'Agrupación estudiantil';
+  const displayColor = org.color || mockOrg?.color || '#1d6ef5';
+  const displayInitials = org.initials || mockOrg?.initials || displayName.slice(0, 2).toUpperCase();
+  const members = org.members || [];
+  const memberCount = Array.isArray(org.members) && org.members.length > 0
+    ? `${org.members.length} integrantes publicados`
+    : typeof org.members === 'number'
+    ? `${org.members.toLocaleString()} miembros`
+    : mockOrg?.members
+    ? `${mockOrg.members.toLocaleString()} miembros`
+    : 'Comunidad estudiantil';
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#030d1c] text-[#f0f6ff]">
@@ -63,7 +74,7 @@ export default async function AgrupacionDetailPage({ params }) {
             <span>/</span>
             <Link href="/agrupaciones" className="hover:text-white transition-colors">Agrupaciones</Link>
             <span>/</span>
-            <span className="text-white font-medium">{org.name}</span>
+            <span className="text-white font-medium truncate max-w-[200px]">{displayName}</span>
           </div>
         </div>
       </div>
@@ -72,32 +83,36 @@ export default async function AgrupacionDetailPage({ params }) {
       <section className="relative">
         {/* Full-width cover image at top */}
         <div className="relative w-full h-64 sm:h-72 md:h-80 bg-[#071428] overflow-hidden">
-          <Image
-            src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&q=80"
-            alt={`Portada de ${org.name}`}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
+          {org.portada ? (
+            <OrganizationImage src={org.portada} name={displayName} cover />
+          ) : (
+            <Image
+              src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&q=80"
+              alt={`Portada de ${displayName}`}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center"
+            />
+          )}
 
-          {/* Overlaid gradient from bottom: from-[#030d1c] via-transparent */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#030d1c] via-[#030d1c]/40 to-transparent" />
+          {/* Overlaid gradient from bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#030d1c] via-[#030d1c]/40 to-transparent pointer-events-none" />
 
-          {/* DSC PUCP logo text overlay in the cover (top right area): org name + subtitle text */}
+          {/* Org badge overlay in the cover (top right area) */}
           <div className="absolute top-5 right-6 sm:right-10 flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-md bg-black/45 border border-white/15 shadow-xl">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md"
-              style={{ backgroundColor: org.color || '#1d6ef5' }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md overflow-hidden"
+              style={{ backgroundColor: displayColor }}
             >
-              {org.initials}
+              {org.logo ? <OrganizationImage src={org.logo} name={displayName} /> : displayInitials}
             </div>
             <div>
               <div className="text-xs font-bold text-white tracking-wide">
-                {org.name}
+                {displayName}
               </div>
               <div className="text-[10px] text-cyan-300">
-                Capítulo Oficial PUCP · Google Tech
+                Comunidad PUCP
               </div>
             </div>
           </div>
@@ -110,38 +125,41 @@ export default async function AgrupacionDetailPage({ params }) {
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
               {/* Org logo square positioned to overlap the cover */}
               <div
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl flex items-center justify-center font-extrabold text-3xl sm:text-4xl text-white shadow-2xl border-4 border-[#030d1c] shrink-0"
-                style={{ backgroundColor: org.color || '#1d6ef5' }}
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl flex items-center justify-center font-extrabold text-3xl sm:text-4xl text-white shadow-2xl border-4 border-[#030d1c] shrink-0 overflow-hidden"
+                style={{ backgroundColor: displayColor }}
               >
-                {org.initials}
+                {org.logo ? (
+                  <OrganizationImage src={org.logo} name={displayName} />
+                ) : (
+                  displayInitials
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Category badge (pill) */}
                   <span className="text-xs px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-400 font-semibold border border-cyan-500/30">
-                    {org.category}
+                    {displayCategory}
                   </span>
                   <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-300 font-medium border border-blue-500/20">
                     Comunidad Oficial
                   </span>
                 </div>
 
-                {/* Org name (large, bold) */}
+                {/* Org name */}
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                  {org.name}
+                  {displayName}
                 </h1>
 
-                {/* Full name (subtitle gray) */}
+                {/* Full name */}
                 <p className="text-sm sm:text-base text-[#94a3b8]">
-                  {org.fullName}
+                  {displayFullName}
                 </p>
 
-                {/* Member count + "Fundada en 2019" metadata */}
+                {/* Metadata */}
                 <div className="flex flex-wrap items-center gap-4 text-xs text-[#94a3b8] pt-1">
                   <span className="flex items-center gap-1.5 text-white font-medium">
                     <span>👥</span>
-                    <span>{(org.members || 1240).toLocaleString()} miembros</span>
+                    <span>{memberCount}</span>
                   </span>
                   <span>·</span>
                   <span className="flex items-center gap-1.5">
@@ -151,7 +169,7 @@ export default async function AgrupacionDetailPage({ params }) {
                   <span>·</span>
                   <span className="flex items-center gap-1.5">
                     <span>📍</span>
-                    <span>Pabellón V, Campus PUCP</span>
+                    <span>Campus PUCP</span>
                   </span>
                 </div>
               </div>
@@ -187,7 +205,12 @@ export default async function AgrupacionDetailPage({ params }) {
       <div className="max-w-7xl mx-auto w-full px-6 lg:px-10 py-8 flex-1">
         {/* B & C. Tabs Navigation & Tab Content (Client Component) */}
         <OrgProfileTabs
-          org={org}
+          org={{
+            ...org,
+            name: displayName,
+            description: displayDesc,
+            members: members,
+          }}
           upcomingEvents={upcomingEvents}
           pastEvents={pastEvents}
         />
@@ -275,7 +298,7 @@ export default async function AgrupacionDetailPage({ params }) {
                 en toda la PUCP
               </div>
               <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">
-                Más de 1,200 miembros conectados mediante canales de Discord, talleres y proyectos colaborativos.
+                Miembros conectados mediante canales de Discord, talleres y proyectos colaborativos.
               </p>
             </div>
           </div>
